@@ -1,15 +1,24 @@
 package br.com.mybank.domain.conta;
 
+import br.com.mybank.ConnectionFactory;
 import br.com.mybank.domain.RegraDeNegocioException;
 import br.com.mybank.domain.cliente.Cliente;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 
 public class ContaService {
 
+    private ConnectionFactory connectionFactory;
     private Set<Conta> contas = new HashSet<>();
+
+    public ContaService() {
+        this.connectionFactory = new ConnectionFactory();
+    }
 
     public Set<Conta> listarContasAbertas() {
         return contas;
@@ -21,13 +30,8 @@ public class ContaService {
     }
 
     public void abrir(DadosAberturaConta dadosDaConta) {
-        var cliente = new Cliente(dadosDaConta.dadosCliente());
-        var conta = new Conta(dadosDaConta.numero(), cliente);
-        if (contas.contains(conta)) {
-            throw new RegraDeNegocioException("Já existe outra conta aberta com o mesmo número!");
-        }
-
-        contas.add(conta);
+        Connection connection = connectionFactory.getConnection();
+        new AccountDao(connection).saveAccount(dadosDaConta);
     }
 
     public void realizarSaque(Integer numeroDaConta, BigDecimal valor) {
