@@ -23,8 +23,8 @@ public class AccountDao {
         var account = new Conta(dadosDaConta.numero(), client);
 
         String sql = """
-                    INSERT INTO account (account_number, balance, client_name, client_cpf, client_email)
-                    VALUES(?,?,?,?,?);
+                    INSERT INTO account (account_number, balance, client_name, client_cpf, client_email, is_active)
+                    VALUES(?,?,?,?,?,?);
                 """;
         try {
             PreparedStatement preparedStatement = connection.prepareStatement(sql);
@@ -33,6 +33,7 @@ public class AccountDao {
             preparedStatement.setString(3, dadosDaConta.dadosCliente().nome());
             preparedStatement.setString(4, dadosDaConta.dadosCliente().cpf());
             preparedStatement.setString(5, dadosDaConta.dadosCliente().email());
+            preparedStatement.setBoolean(6, true);
 
             preparedStatement.execute();
             preparedStatement.close();
@@ -45,7 +46,7 @@ public class AccountDao {
     public Set<Conta> list() {
         Set<Conta> accounts = new HashSet<>();
         String sql = """
-                SELECT * FROM account;
+                SELECT * FROM account WHERE is_active = true;
                 """;
 
         try {
@@ -97,10 +98,11 @@ public class AccountDao {
                 String clientName = resultSet.getString(3);
                 String clientCpf = resultSet.getString(4);
                 String clientEmail = resultSet.getString(5);
+                Boolean isActive = resultSet.getBoolean(6);
 
                 DadosCadastroCliente dadosCadastroCliente = new DadosCadastroCliente(clientName, clientCpf, clientEmail);
                 Cliente cliente = new Cliente(dadosCadastroCliente);
-                conta = new Conta(account_number, cliente, balance);
+                conta = new Conta(account_number, cliente, balance, isActive);
             }
 
             preparedStatement.close();
@@ -139,6 +141,45 @@ public class AccountDao {
                 throw new RuntimeException(ex.getMessage());
             }
             throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public void deleteAccount(Integer accountNumber) {
+        PreparedStatement preparedStatement;
+        String sql = """
+                DELETE FROM account
+                WHERE account_number = ?;
+                """;
+
+        try {
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setInt(1, accountNumber);
+
+            preparedStatement.execute();
+            preparedStatement.close();
+            connection.close();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void logicalDelete(Integer accountNumber) {
+        PreparedStatement preparedStatement;
+        String sql = """
+                UPDATE account
+                SET is_active = false
+                WHERE account_number = ?;
+                """;
+
+        try {
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setInt(1, accountNumber);
+
+            preparedStatement.execute();
+            preparedStatement.close();
+            connection.close();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 }

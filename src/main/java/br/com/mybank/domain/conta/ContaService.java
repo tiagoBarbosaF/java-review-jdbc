@@ -11,7 +11,6 @@ import java.util.Set;
 public class ContaService {
 
     private final ConnectionFactory connectionFactory;
-    private final Set<Conta> contas = new HashSet<>();
 
     public ContaService() {
         this.connectionFactory = new ConnectionFactory();
@@ -45,6 +44,10 @@ public class ContaService {
             throw new RegraDeNegocioException("Saldo insuficiente!");
         }
 
+        if (!conta.getActive()) {
+            throw new RegraDeNegocioException("Conta está inativa.");
+        }
+
         BigDecimal newValue = conta.getSaldo().subtract(valor);
         updateBalance(newValue, conta);
     }
@@ -75,7 +78,19 @@ public class ContaService {
             throw new RegraDeNegocioException("Conta não pode ser encerrada pois ainda possui saldo!");
         }
 
-        contas.remove(conta);
+        Connection connection = connectionFactory.getConnection();
+        new AccountDao(connection).deleteAccount(numeroDaConta);
+    }
+
+    public void encerrarLogico(Integer numeroConta) {
+        var conta = buscarContaPorNumero(numeroConta);
+
+        if (conta.possuiSaldo()) {
+            throw new RegraDeNegocioException("Conta não pode ser encerrada pois possui saldo.");
+        }
+
+        Connection connection = connectionFactory.getConnection();
+        new AccountDao(connection).logicalDelete(numeroConta);
     }
 
     private Conta buscarContaPorNumero(Integer numero) {
