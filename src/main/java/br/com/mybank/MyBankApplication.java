@@ -2,6 +2,7 @@ package br.com.mybank;
 
 import br.com.mybank.domain.RegraDeNegocioException;
 import br.com.mybank.domain.cliente.DadosCadastroCliente;
+import br.com.mybank.domain.conta.Conta;
 import br.com.mybank.domain.conta.ContaService;
 import br.com.mybank.domain.conta.DadosAberturaConta;
 
@@ -9,30 +10,33 @@ import java.util.Scanner;
 
 public class MyBankApplication {
 
-    private static ContaService service = new ContaService();
-    private static Scanner teclado = new Scanner(System.in).useDelimiter("\n");
+    private static final ContaService service = new ContaService();
+    private static final Scanner teclado = new Scanner(System.in).useDelimiter("\n");
 
     public static void main(String[] args) {
         var opcao = exibirMenu();
-        while (opcao != 7) {
+        while (opcao != 0) {
             try {
                 switch (opcao) {
                     case 1:
                         listarContas();
                         break;
                     case 2:
-                        abrirConta();
+                        listarContaPorCpf();
                         break;
                     case 3:
-                        encerrarConta();
+                        abrirConta();
                         break;
                     case 4:
-                        consultarSaldo();
+                        encerrarConta();
                         break;
                     case 5:
-                        realizarSaque();
+                        consultarSaldo();
                         break;
                     case 6:
+                        realizarSaque();
+                        break;
+                    case 7:
                         realizarDeposito();
                         break;
                 }
@@ -51,12 +55,13 @@ public class MyBankApplication {
         System.out.println("""
                 BYTEBANK - ESCOLHA UMA OPÇÃO:
                 1 - Listar contas abertas
-                2 - Abertura de conta
-                3 - Encerramento de conta
-                4 - Consultar saldo de uma conta
-                5 - Realizar saque em uma conta
-                6 - Realizar depósito em uma conta
-                7 - Sair
+                2 - Listar conta por cpf
+                3 - Abertura de conta
+                4 - Encerramento de conta
+                5 - Consultar saldo de uma conta
+                6 - Realizar saque em uma conta
+                7 - Realizar depósito em uma conta
+                0 - Sair
                 """);
         return teclado.nextInt();
     }
@@ -64,7 +69,18 @@ public class MyBankApplication {
     private static void listarContas() {
         System.out.println("Contas cadastradas:");
         var contas = service.listarContasAbertas();
-        contas.stream().forEach(System.out::println);
+        contas.forEach(System.out::println);
+
+        System.out.println("Pressione qualquer tecla e de ENTER para voltar ao menu principal");
+        teclado.next();
+    }
+
+    private static void listarContaPorCpf() {
+        System.out.print("Digite o número do CPF que deseja consultar: ");
+        String cpf = teclado.next();
+        Conta conta = service.contaPorCpf(cpf);
+
+        System.out.println(conta);
 
         System.out.println("Pressione qualquer tecla e de ENTER para voltar ao menu principal");
         teclado.next();

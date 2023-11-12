@@ -2,26 +2,27 @@ package br.com.mybank.domain.conta;
 
 import br.com.mybank.ConnectionFactory;
 import br.com.mybank.domain.RegraDeNegocioException;
-import br.com.mybank.domain.cliente.Cliente;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 
 public class ContaService {
 
-    private ConnectionFactory connectionFactory;
-    private Set<Conta> contas = new HashSet<>();
+    private final ConnectionFactory connectionFactory;
+    private final Set<Conta> contas = new HashSet<>();
 
     public ContaService() {
         this.connectionFactory = new ConnectionFactory();
     }
 
     public Set<Conta> listarContasAbertas() {
-        return contas;
+        return new AccountDao(connectionFactory.getConnection()).list();
+    }
+
+    public Conta contaPorCpf(String cpf) {
+        return new AccountDao(connectionFactory.getConnection()).accountCpf(cpf);
     }
 
     public BigDecimal consultarSaldo(Integer numeroDaConta) {
@@ -31,7 +32,7 @@ public class ContaService {
 
     public void abrir(DadosAberturaConta dadosDaConta) {
         Connection connection = connectionFactory.getConnection();
-        new AccountDao(connection).saveAccount(dadosDaConta);
+        new AccountDao(connection).save(dadosDaConta);
     }
 
     public void realizarSaque(Integer numeroDaConta, BigDecimal valor) {
@@ -68,7 +69,7 @@ public class ContaService {
     private Conta buscarContaPorNumero(Integer numero) {
         return contas
                 .stream()
-                .filter(c -> c.getNumero() == numero)
+                .filter(c -> c.getNumero().equals(numero))
                 .findFirst()
                 .orElseThrow(() -> new RegraDeNegocioException("Não existe conta cadastrada com esse número!"));
     }
