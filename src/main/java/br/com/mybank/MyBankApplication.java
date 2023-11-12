@@ -22,7 +22,7 @@ public class MyBankApplication {
                         listarContas();
                         break;
                     case 2:
-                        listarContaPorCpf();
+                        listarContaPorNumero();
                         break;
                     case 3:
                         abrirConta();
@@ -39,9 +39,12 @@ public class MyBankApplication {
                     case 7:
                         realizarDeposito();
                         break;
+                    case 8:
+                        realizarTransferencia();
+                        break;
                 }
             } catch (RegraDeNegocioException e) {
-                System.out.println("Erro: " +e.getMessage());
+                System.out.println("Erro: " + e.getMessage());
                 System.out.println("Pressione qualquer tecla e de ENTER para voltar ao menu");
                 teclado.next();
             }
@@ -51,16 +54,18 @@ public class MyBankApplication {
         System.out.println("Finalizando a aplicação.");
     }
 
+
     private static int exibirMenu() {
         System.out.println("""
                 BYTEBANK - ESCOLHA UMA OPÇÃO:
                 1 - Listar contas abertas
-                2 - Listar conta por cpf
+                2 - Listar conta por número
                 3 - Abertura de conta
                 4 - Encerramento de conta
                 5 - Consultar saldo de uma conta
                 6 - Realizar saque em uma conta
                 7 - Realizar depósito em uma conta
+                8 - Realizar transferência
                 0 - Sair
                 """);
         return teclado.nextInt();
@@ -75,10 +80,10 @@ public class MyBankApplication {
         teclado.next();
     }
 
-    private static void listarContaPorCpf() {
+    private static void listarContaPorNumero() {
         System.out.print("Digite o número do CPF que deseja consultar: ");
-        String cpf = teclado.next();
-        Conta conta = service.contaPorCpf(cpf);
+        Integer number = teclado.nextInt();
+        Conta conta = service.accountPerNumber(number);
 
         System.out.println(conta);
 
@@ -121,7 +126,7 @@ public class MyBankApplication {
         System.out.println("Digite o número da conta:");
         var numeroDaConta = teclado.nextInt();
         var saldo = service.consultarSaldo(numeroDaConta);
-        System.out.println("Saldo da conta: " +saldo);
+        System.out.println("Saldo da conta: " + saldo);
 
         System.out.println("Pressione qualquer tecla e de ENTER para voltar ao menu principal");
         teclado.next();
@@ -150,6 +155,23 @@ public class MyBankApplication {
         service.realizarDeposito(numeroDaConta, valor);
 
         System.out.println("Depósito realizado com sucesso!");
+        System.out.println("Pressione qualquer tecla e de ENTER para voltar ao menu principal");
+        teclado.next();
+    }
+
+    private static void realizarTransferencia() {
+        System.out.println("Digite o número da conta de origem:");
+        var numeroContaOrigem = teclado.nextInt();
+
+        System.out.println("Digite o número da conta de destino:");
+        var numeroContaDestino = teclado.nextInt();
+
+        System.out.println("Digite valor a ser transferido:");
+        var valor = teclado.nextBigDecimal();
+
+        service.realizarTransferencia(numeroContaOrigem, numeroContaDestino, valor);
+
+        System.out.println("Transferência realizada com sucesso!");
         System.out.println("Pressione qualquer tecla e de ENTER para voltar ao menu principal");
         teclado.next();
     }

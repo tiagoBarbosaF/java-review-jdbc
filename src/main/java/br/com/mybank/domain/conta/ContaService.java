@@ -21,8 +21,8 @@ public class ContaService {
         return new AccountDao(connectionFactory.getConnection()).list();
     }
 
-    public Conta contaPorCpf(String cpf) {
-        return new AccountDao(connectionFactory.getConnection()).accountCpf(cpf);
+    public Conta accountPerNumber(Integer accountNumber) {
+        return new AccountDao(connectionFactory.getConnection()).accountPerNumber(accountNumber);
     }
 
     public BigDecimal consultarSaldo(Integer numeroDaConta) {
@@ -45,7 +45,8 @@ public class ContaService {
             throw new RegraDeNegocioException("Saldo insuficiente!");
         }
 
-        conta.sacar(valor);
+        BigDecimal newValue = conta.getSaldo().subtract(valor);
+        updateBalance(newValue, conta);
     }
 
     public void realizarDeposito(Integer numeroDaConta, BigDecimal valor) {
@@ -54,7 +55,18 @@ public class ContaService {
             throw new RegraDeNegocioException("Valor do deposito deve ser superior a zero!");
         }
 
-        conta.depositar(valor);
+        BigDecimal newValue = conta.getSaldo().add(valor);
+        updateBalance(newValue, conta);
+    }
+
+    public void realizarTransferencia(Integer numberConteOrigem, Integer numeroContaDestino, BigDecimal valor) {
+        this.realizarSaque(numberConteOrigem, valor);
+        this.realizarDeposito(numeroContaDestino, valor);
+    }
+
+    private void updateBalance(BigDecimal valor, Conta conta) {
+        Connection connection = connectionFactory.getConnection();
+        new AccountDao(connection).updateBalance(conta.getNumero(), valor);
     }
 
     public void encerrar(Integer numeroDaConta) {
@@ -67,10 +79,13 @@ public class ContaService {
     }
 
     private Conta buscarContaPorNumero(Integer numero) {
-        return contas
-                .stream()
-                .filter(c -> c.getNumero().equals(numero))
-                .findFirst()
-                .orElseThrow(() -> new RegraDeNegocioException("Não existe conta cadastrada com esse número!"));
+        Connection connection = connectionFactory.getConnection();
+        Conta conta = new AccountDao(connection).accountPerNumber(numero);
+
+        if (conta != null) {
+            return conta;
+        } else {
+            throw new RegraDeNegocioException("Account doesn't exists.");
+        }
     }
 }

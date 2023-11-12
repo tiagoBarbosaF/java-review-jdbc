@@ -62,7 +62,7 @@ public class AccountDao {
                 DadosCadastroCliente dadosCadastroCliente = new DadosCadastroCliente(clientName, clientCpf, clientEmail);
                 Cliente cliente = new Cliente(dadosCadastroCliente);
 
-                accounts.add(new Conta(account_number, cliente));
+                accounts.add(new Conta(account_number, cliente, balance));
             }
 
             preparedStatement.close();
@@ -76,22 +76,22 @@ public class AccountDao {
         return accounts;
     }
 
-    public Conta accountCpf(String cpf) {
+    public Conta accountPerNumber(Integer accountNumber) {
         Conta conta = null;
         String sql = """
                 SELECT *
                 FROM account
                 WHERE
-                client_cpf = ?;
+                account_number = ?;
                 """;
 
         try {
             PreparedStatement preparedStatement = connection.prepareStatement(sql);
-            preparedStatement.setString(1, cpf);
+            preparedStatement.setInt(1, accountNumber);
             preparedStatement.executeQuery();
             ResultSet resultSet = preparedStatement.executeQuery();
 
-            while (resultSet.next()){
+            while (resultSet.next()) {
                 int account_number = resultSet.getInt(1);
                 BigDecimal balance = resultSet.getBigDecimal(2);
                 String clientName = resultSet.getString(3);
@@ -100,7 +100,7 @@ public class AccountDao {
 
                 DadosCadastroCliente dadosCadastroCliente = new DadosCadastroCliente(clientName, clientCpf, clientEmail);
                 Cliente cliente = new Cliente(dadosCadastroCliente);
-                conta = new Conta(account_number, cliente);
+                conta = new Conta(account_number, cliente, balance);
             }
 
             preparedStatement.close();
@@ -110,6 +110,35 @@ public class AccountDao {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-            return conta;
+        return conta;
+    }
+
+    public void updateBalance(Integer accountNumber, BigDecimal value) {
+        PreparedStatement preparedStatement;
+        String sql = """
+                UPDATE account
+                SET balance = ?
+                WHERE
+                account_number = ?;
+                """;
+
+        try {
+            connection.setAutoCommit(false);
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setBigDecimal(1, value);
+            preparedStatement.setInt(2, accountNumber);
+
+            preparedStatement.execute();
+            connection.commit();
+            preparedStatement.close();
+            connection.close();
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex.getMessage());
+            }
+            throw new RuntimeException(e.getMessage());
+        }
     }
 }
